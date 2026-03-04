@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file (stable and beta
 
 - Ongoing development.
 
+## [v0.0.26]
+
+- Restored settings discoverability for background-only launches: opening Docktor from Applications/Dock now reliably opens the settings window, including when another Docktor instance is already running.
+- Added a running-instance handoff for explicit settings opens so duplicate launches request settings in the existing process, then exit cleanly.
+- Auto-restores menu bar icon visibility when settings are explicitly requested (reopen/URL/Finder launch), so users always have a visible way back to settings.
+
 ## [v0.0.25]
 
 - Fixed mixed-device scroll direction handling by preferring discrete wheel delta fields for non-continuous mouse events, improving compatibility with per-device remappers like UnnaturalScrollWheels.

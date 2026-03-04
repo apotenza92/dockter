@@ -12,26 +12,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let legacyAppBundleNames = ["DockActioner.app", "Dockter.app"]
     private let currentAppBundleName = "Docktor.app"
     private let openSettingsLaunchArguments: Set<String> = ["--settings", "-settings", "--open-settings"]
+    private let openSettingsDistributedNotification = Notification.Name("pzc.Docktor.openSettings")
+    private var openSettingsObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         migrateLegacyAppBundleNameIfNeeded()
         Logger.log("Launched bundle at \(Bundle.main.bundleURL.path), bundleId \(Bundle.main.bundleIdentifier ?? "nil"), pid \(ProcessInfo.processInfo.processIdentifier), LSUIElement \(Bundle.main.object(forInfoDictionaryKey: "LSUIElement") as? Bool ?? false)")
 
-        terminateOtherInstances()
+        startObservingOpenSettingsRequests()
+
+        let launchRequestsSettings = ProcessInfo.processInfo.arguments.contains { openSettingsLaunchArguments.contains($0) }
+        let launchedFromFinder = isFinderLaunch()
+        let shouldRequestSettingsFromExisting = launchRequestsSettings || launchedFromFinder
+
+        if resolveRunningInstances(shouldRequestSettingsFromExisting: shouldRequestSettingsFromExisting) {
+            return
+        }
 
         menuBarController = MenuBarController(preferences: preferences, appDelegate: self)
         coordinator.startIfPossible()
         updateManager.configureForLaunch(isAutomatedMode: false)
 
         let isFirstLaunch = !preferences.firstLaunchCompleted
-        let launchRequestsSettings = ProcessInfo.processInfo.arguments.contains { openSettingsLaunchArguments.contains($0) }
-        let shouldShowWindow = launchRequestsSettings || isFirstLaunch || preferences.showOnStartup
+        let shouldShowWindow = shouldRequestSettingsFromExisting || isFirstLaunch || preferences.showOnStartup
         if launchRequestsSettings {
             Logger.log("Launch argument requested settings window")
         }
+        if launchedFromFinder {
+            Logger.log("Finder launch detected")
+        }
 
         DispatchQueue.main.async {
+            if shouldRequestSettingsFromExisting {
+                self.restoreMenuBarIconIfNeeded()
+            }
             if shouldShowWindow {
                 self.showSettingsWindow()
             }
@@ -42,17 +57,65 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func terminateOtherInstances() {
-        guard let bundleId = Bundle.main.bundleIdentifier else { return }
+    private func isFinderLaunch() -> Bool {
+        ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("-psn_") }
+    }
+
+    @discardableResult
+    private func resolveRunningInstances(shouldRequestSettingsFromExisting: Bool) -> Bool {
+        guard let bundleId = Bundle.main.bundleIdentifier else { return false }
         let me = ProcessInfo.processInfo.processIdentifier
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
             .filter { $0.processIdentifier != me }
 
-        guard !others.isEmpty else { return }
+        guard !others.isEmpty else { return false }
+
+        if shouldRequestSettingsFromExisting {
+            Logger.log("Existing instance detected (\(others.map { $0.processIdentifier })); requesting settings open in running instance")
+            requestSettingsOpenFromExistingInstance()
+            NSApp.terminate(nil)
+            return true
+        }
+
         Logger.log("Terminating other running instances: \(others.map { $0.processIdentifier })")
         for app in others {
             _ = app.terminate()
         }
+        return false
+    }
+
+    private func startObservingOpenSettingsRequests() {
+        guard openSettingsObserver == nil else { return }
+        let center = DistributedNotificationCenter.default()
+        let observedObject = Bundle.main.bundleIdentifier
+        openSettingsObserver = center.addObserver(
+            forName: openSettingsDistributedNotification,
+            object: observedObject,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                Logger.log("Received distributed settings-open request")
+                self.restoreMenuBarIconIfNeeded()
+                self.showSettingsWindow()
+            }
+        }
+    }
+
+    private func requestSettingsOpenFromExistingInstance() {
+        guard let bundleId = Bundle.main.bundleIdentifier else { return }
+        DistributedNotificationCenter.default().postNotificationName(
+            openSettingsDistributedNotification,
+            object: bundleId,
+            userInfo: nil,
+            deliverImmediately: true
+        )
+    }
+
+    private func restoreMenuBarIconIfNeeded() {
+        guard !preferences.showMenuBarIcon else { return }
+        Logger.log("Restoring menu bar icon visibility after explicit settings request")
+        preferences.showMenuBarIcon = true
     }
 
     private func migrateLegacyAppBundleNameIfNeeded() {
@@ -80,7 +143,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        if let openSettingsObserver {
+            DistributedNotificationCenter.default().removeObserver(openSettingsObserver)
+            self.openSettingsObserver = nil
+        }
         coordinator.stop()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        Logger.log("Received app reopen request")
+        restoreMenuBarIconIfNeeded()
+        showSettingsWindow()
+        return false
     }
 
     private func handlePermissionsIfNeeded(allowPrompt: Bool) {
@@ -119,6 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let path = url.path.lowercased()
         if host == "settings" || host == "preferences" || path == "/settings" || path == "/preferences" {
             Logger.log("Received URL request to open settings: \(url.absoluteString)")
+            restoreMenuBarIconIfNeeded()
             showSettingsWindow()
         }
     }
