@@ -5,18 +5,18 @@
     <description>Docktor update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.0.29</title>
-      <link>https://github.com/apotenza92/docktor/releases/tag/v0.0.29</link>
-      <sparkle:version>2990000</sparkle:version>
-      <sparkle:shortVersionString>0.0.29</sparkle:shortVersionString>
+      <title>Version 0.0.30</title>
+      <link>https://github.com/apotenza92/docktor/releases/tag/v0.0.30</link>
+      <sparkle:version>3090000</sparkle:version>
+      <sparkle:shortVersionString>0.0.30</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/docktor/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed release packaging so Sparkle feed URLs are channel+architecture-specific at build time (`stable-arm64`, `stable-x64`, `beta-arm64`, `beta-x64`) instead of a single hardcoded stable feed.
-- Ensured Beta app builds consistently follow the Beta appcast track, which already promotes newer stable releases when they are newer than prereleases.]]></description>
-      <pubDate>Wed, 04 Mar 2026 04:08:52 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/docktor/releases/download/v0.0.29/Docktor-v0.0.29-macos-arm64.zip"
-                 sparkle:edSignature="6a7KZ7T0mx+fqZ/ojWEBwQ1YHiimwv4G1W8IV/Sk21YecpSytkVVi/y4TNYD3lNrqeRk/3buUMz6/75VtFMCCg=="
-                 length="4422320"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed Sparkle feed URL injection for packaged builds by parameterizing `SUFeedURL` in `Docktor/Info.plist` (`$(SU_FEED_URL)`) and overriding it per release matrix entry.
+- Beta artifacts now embed the Beta appcast URL directly (`beta-arm64` / `beta-x64`), ensuring Beta users receive the Beta track (which already advances to newer stable versions when they surpass prereleases).]]></description>
+      <pubDate>Wed, 04 Mar 2026 04:15:45 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/docktor/releases/download/v0.0.30/Docktor-v0.0.30-macos-arm64.zip"
+                 sparkle:edSignature="Nh9nlCBWZD+nDiTytd0IZRpCp6U3i1meKNg+Lojke3SvR2MI0uyZ6KuZF3uZ+2VQujGzznRND2oVUhi4Or64AQ=="
+                 length="4422605"
                  type="application/octet-stream" />
     </item>
   </channel>
