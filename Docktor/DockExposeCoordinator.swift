@@ -541,29 +541,11 @@ final class DockExposeCoordinator: ObservableObject {
         let frontmostBefore = context.frontmostBefore
         let clickedBundle = context.clickedBundle
         let appExposeActive = isAppExposeInteractionActive(frontmostBefore: frontmostBefore)
-        let isPlainClick = modifierCombination(from: flags) == .none
         let clickedAppIsActive = NSWorkspace.shared.runningApplications.contains {
             $0.bundleIdentifier == clickedBundle && $0.isActive
         }
 
         Logger.debug("WORKFLOW: click=\(context.clickSequence) frontmost=\(frontmostBefore ?? "nil"), clicked=\(clickedBundle), clickedIsActive=\(clickedAppIsActive), windowsDown=\(context.windowCountAtMouseDown.map(String.init) ?? "nil"), fallbackLatched=\(context.forceFirstClickActivateFallback), lastTriggered=\(lastTriggeredBundle ?? "nil"), currentExpose=\(currentExposeApp ?? "nil")")
-
-        if !appExposeActive,
-           let trackedExposeApp = currentExposeApp,
-           lastTriggeredBundle != nil,
-           trackedExposeApp != clickedBundle,
-           isPlainClick,
-           configuredAction(for: .click, flags: flags) == .appExpose,
-           isRecentExposeInteraction(),
-           !appsWithoutWindowsInExpose.contains(clickedBundle) {
-            Logger.debug("WORKFLOW: Treating click as App Exposé tracked switch from \(trackedExposeApp) to \(clickedBundle)")
-            currentExposeApp = clickedBundle
-            lastTriggeredBundle = clickedBundle
-            lastExposeDockClickBundle = clickedBundle
-            lastExposeInteractionAt = Date()
-            appsWithoutWindowsInExpose.remove(clickedBundle)
-            return false
-        }
 
         if appExposeActive {
             if currentExposeApp == clickedBundle {
@@ -623,7 +605,7 @@ final class DockExposeCoordinator: ObservableObject {
         }
 
         if frontmostBefore != clickedBundle && !clickedAppIsActive {
-            if lastTriggeredBundle != nil {
+            if lastTriggeredBundle != nil, appExposeActive {
                 Logger.debug("WORKFLOW: App Exposé active - user clicked different app (\(clickedBundle)) to show its windows")
 
                 if !WindowManager.hasVisibleWindows(bundleIdentifier: clickedBundle) {
@@ -647,9 +629,11 @@ final class DockExposeCoordinator: ObservableObject {
                 Logger.debug("WORKFLOW: Updated App Exposé tracking current=\(clickedBundle) last=\(clickedBundle)")
                 return false
             } else {
+                if lastTriggeredBundle != nil || currentExposeApp != nil {
+                    Logger.debug("WORKFLOW: Clearing stale App Exposé tracking before first-click evaluation")
+                    resetExposeTracking()
+                }
                 Logger.debug("WORKFLOW: Different app clicked; evaluating first-click behavior")
-                currentExposeApp = nil
-                appsWithoutWindowsInExpose.removeAll()
                 return executeFirstClickAction(for: clickedBundle,
                                                flags: flags,
                                                frontmostBefore: frontmostBefore,
@@ -660,8 +644,14 @@ final class DockExposeCoordinator: ObservableObject {
 
         if let lastBundle = lastTriggeredBundle, lastBundle == clickedBundle {
             if frontmostBefore == clickedBundle {
-                Logger.debug("WORKFLOW: App Exposé already closed for \(clickedBundle); clearing state")
-                resetExposeTracking()
+                Logger.debug("WORKFLOW: App Exposé close/dismiss path for \(clickedBundle); forcing cleanup")
+                exitAppExpose()
+                // This click is part of closing an App Exposé cycle (or stale-tracking cleanup).
+                // Never immediately re-trigger App Exposé on the same click.
+                recordActionExecution(action: .none,
+                                      bundle: clickedBundle,
+                                      source: "clickExposeDismissPassThrough")
+                return false
             } else {
                 Logger.debug("WORKFLOW: Deactivate click on original trigger app (\(clickedBundle)), staying on this app")
                 resetExposeTracking()
@@ -993,6 +983,9 @@ final class DockExposeCoordinator: ObservableObject {
             recordActionExecution(action: .activateApp,
                                   bundle: bundleIdentifier,
                                   source: "firstClickActivatePassThrough")
+            scheduleDockActivationAssertionIfNeeded(for: bundleIdentifier,
+                                                    frontmostBefore: frontmostBefore,
+                                                    reason: "firstClickActivatePassThrough")
             return false
         case .bringAllToFront:
             guard NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier == bundleIdentifier }) else {

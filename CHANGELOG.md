@@ -6,6 +6,11 @@ All notable changes to this project are documented in this file (stable and beta
 
 - Ongoing development.
 
+## [v0.0.28]
+
+- Fixed App Exposé state cleanup after dismiss so switching to a different app from the Dock works on the first click instead of intermittently requiring a second click.
+- Hardened first-click `Activate App` pass-through by asserting Dock-driven activation when needed, improving reliability after App Exposé close/dismiss flows.
+
 ## [v0.0.27]
 
 - Fixed a Sparkle relaunch regression where `Install and Relaunch` could fail to reopen the app if a Finder-style relaunch (`-psn_`) was incorrectly treated as a settings-handoff launch.
