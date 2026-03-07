@@ -3,24 +3,22 @@ import AppKit
 enum StatusBarIcon {
     static func image(pointSize: CGFloat = 18) -> NSImage {
         let size = NSSize(width: pointSize, height: pointSize)
-        let image = NSImage(size: size)
+        let image = NSImage(size: size, flipped: false) { rect in
+            NSColor.black.setStroke()
+
+            let inset: CGFloat = max(0.55, pointSize * 0.045)
+            var glyphRect = NSRect(
+                x: rect.minX + inset,
+                y: rect.minY + inset,
+                width: rect.width - inset * 2,
+                height: rect.height - inset * 2
+            )
+            glyphRect.origin.y -= pointSize * 0.008
+
+            drawAirVentGlyph(in: glyphRect, mirroredHorizontally: true, flippedVertically: false)
+            return true
+        }
         image.isTemplate = true
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        NSColor.black.setStroke()
-
-        let inset: CGFloat = max(0.55, pointSize * 0.045)
-        var glyphRect = NSRect(
-            x: inset,
-            y: inset,
-            width: size.width - inset * 2,
-            height: size.height - inset * 2
-        )
-        glyphRect.origin.y -= pointSize * 0.008
-
-        drawAirVentGlyph(in: glyphRect, mirroredHorizontally: true, flippedVertically: false)
         return image
     }
 

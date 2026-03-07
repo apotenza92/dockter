@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file (stable and beta
 
 - Ongoing development.
 
+## [v0.0.33]
+
+- Fixed the menu bar icon rendering path to redraw as a template image per display scale, so the glyph stays sharp when moving between non-Retina external displays and Retina MacBook panels.
+
 ## [v0.0.32]
 
 - Improved mixed-device scroll direction resolution by preferring AppKit-interpreted deltas (what apps actually receive) and adding conflict handling for disagreeing CGEvent scroll fields.
