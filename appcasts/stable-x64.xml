@@ -5,20 +5,17 @@
     <description>Docktor update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.0.32</title>
-      <link>https://github.com/apotenza92/docktor/releases/tag/v0.0.32</link>
-      <sparkle:version>3290000</sparkle:version>
-      <sparkle:shortVersionString>0.0.32</sparkle:shortVersionString>
+      <title>Version 0.0.33</title>
+      <link>https://github.com/apotenza92/docktor/releases/tag/v0.0.33</link>
+      <sparkle:version>3390000</sparkle:version>
+      <sparkle:shortVersionString>0.0.33</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/docktor/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Improved mixed-device scroll direction resolution by preferring AppKit-interpreted deltas (what apps actually receive) and adding conflict handling for disagreeing CGEvent scroll fields.
-- Added `scripts/automated_scroll_direction_checks.sh` for deterministic GUI-level scroll routing checks (discrete + continuous events on real Dock icon targets), and wired it into `scripts/run_all_checks.sh`.
-- Improved automatic mixed-device handling: discrete mouse-wheel routing now auto-inverts when remapper heuristics (e.g. Mos/LinearMouse/UnnaturalScrollWheels detection) indicate mouse-only direction remapping, while trackpad/Magic Mouse routing remains unchanged.
-- Fixed issue #1 follow-up: prevented delayed Dock context-menu popups after second-click `Minimize All` by using action-aware pressed-state recovery for consumed minimize clicks.]]></description>
-      <pubDate>Thu, 05 Mar 2026 05:04:57 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/docktor/releases/download/v0.0.32/Docktor-v0.0.32-macos-x64.zip"
-                 sparkle:edSignature="tzf8EGEjbmyhayZEdOSwWu4Ti7fG9a8tVoDbOaY76588vkv+GmFrhk+9eqLBd0xbns3sJHsU0/hIgUwu4AJLBA=="
-                 length="4439393"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed the menu bar icon rendering path to redraw as a template image per display scale, so the glyph stays sharp when moving between non-Retina external displays and Retina MacBook panels.]]></description>
+      <pubDate>Sat, 07 Mar 2026 09:26:21 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/docktor/releases/download/v0.0.33/Docktor-v0.0.33-macos-x64.zip"
+                 sparkle:edSignature="aAb/Vwgu4FPuUX+Xj8iVzvMGQfbK6QQ/QYkLvNyJw5OWtmRVKXyoE24f5H++sJ16OW7BRUELxlaRT2XdyiQqCg=="
+                 length="4438852"
                  type="application/octet-stream" />
     </item>
   </channel>
