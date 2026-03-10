@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file (stable and beta
 
 - Ongoing development.
 
+## [v0.1.2]
+
+- Fixed modifier-click timing so modifier double-click actions no longer get swallowed by the first modifier click, while single-click modifier actions still execute correctly after the system double-click interval.
+- Restored reliable modifier toggle behavior for `Hide Others` and `Hide App`, including second-click undo/show-all handling and target-only unhide for `Hide App`.
+- Added `scripts/automated_modifier_toggle_checks.sh` to cover real Dock GUI regressions for modifier single-click and double-click action interactions.
+
 ## [v0.1.1]
 
 - Added a public macOS download page with stable/beta channel switching, Apple Silicon/Intel selection, direct GitHub release downloads, and matching Homebrew install commands.

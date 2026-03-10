@@ -33,6 +33,7 @@ final class DockExposeCoordinator: ObservableObject {
     private var exposeTrackingExpiryTokenCounter: UInt64 = 0
     private var pendingDockClickWatchdogTokenCounter: UInt64 = 0
     private var consumedFollowUpClickWatchdogTokenCounter: UInt64 = 0
+    private var deferredModifierFirstClickTokenCounter: UInt64 = 0
     private let appExposeDismissGraceWindow: TimeInterval = 0.02
     private let exposeTrackingExpiryWindow: TimeInterval = 0.9
 
@@ -84,6 +85,7 @@ final class DockExposeCoordinator: ObservableObject {
         let clickedBundle: String
         let windowCountAtMouseDown: Int?
         let followsFirstClickActivation: Bool
+        let followsDeferredModifierFirstClick: Bool
         let consumeClick: Bool
         let forceFirstClickActivateFallback: Bool
     }
@@ -92,6 +94,18 @@ final class DockExposeCoordinator: ObservableObject {
         let source: String
         let origin: CGPoint?
     }
+
+    private struct DeferredModifierFirstClickContext {
+        let token: UInt64
+        let location: CGPoint
+        let flags: CGEventFlags
+        let frontmostBefore: String?
+        let clickedBundle: String
+        let action: DockAction
+        let queuedAt: Date
+    }
+
+    private var deferredModifierFirstClickContext: DeferredModifierFirstClickContext?
 
     var isAppExposeShortcutConfigured: Bool {
         invoker.isApplicationWindowsHotKeyConfigured()
@@ -155,6 +169,7 @@ final class DockExposeCoordinator: ObservableObject {
     func stop() {
         permissionPollTask?.cancel()
         permissionPollTask = nil
+        clearDeferredModifierFirstClickContext()
         eventTap.stop()
         isRunning = false
         Logger.log("Event tap stopped.")
@@ -446,6 +461,21 @@ final class DockExposeCoordinator: ObservableObject {
                 Logger.debug("WORKFLOW: Recovered stale pending Dock click priorClick=\(staleContext.clickSequence) newBundle=\(clickedBundle) recoveryPoint=(\(Int(recoveryPoint.x)),\(Int(recoveryPoint.y)))")
             }
 
+            var followsDeferredModifierFirstClick = false
+            if let deferred = deferredModifierFirstClickContext {
+                if shouldPromoteDeferredModifierFirstClick(deferred,
+                                                           newBundle: clickedBundle,
+                                                           flags: flags) {
+                    executeDeferredModifierFirstClick(deferred,
+                                                      reason: "promoteDoubleClick",
+                                                      shouldRecoverDockPressedStateAfterExecution: false)
+                    followsDeferredModifierFirstClick = true
+                    Logger.debug("WORKFLOW: Promoting deferred modifier first-click to double-click bundle=\(clickedBundle) modifier=\(modifierCombination(from: flags).rawValue)")
+                } else {
+                    executeDeferredModifierFirstClick(deferred, reason: "newDockClick")
+                }
+            }
+
             if diagnosticsCaptureActive {
                 lastDockBundleHit = clickedBundle
                 lastDockBundleHitAt = Date()
@@ -471,6 +501,7 @@ final class DockExposeCoordinator: ObservableObject {
                                               clickedBundle: clickedBundle,
                                               windowCountAtMouseDown: windowCountAtMouseDown,
                                               followsFirstClickActivation: isRecentFirstClickActivatePassThrough(for: clickedBundle),
+                                              followsDeferredModifierFirstClick: followsDeferredModifierFirstClick,
                                               consumeClick: false,
                                               forceFirstClickActivateFallback: false)
             let consumeClick = shouldConsumeClick(for: context)
@@ -484,6 +515,7 @@ final class DockExposeCoordinator: ObservableObject {
                                                      clickedBundle: context.clickedBundle,
                                                      windowCountAtMouseDown: context.windowCountAtMouseDown,
                                                      followsFirstClickActivation: context.followsFirstClickActivation,
+                                                     followsDeferredModifierFirstClick: context.followsDeferredModifierFirstClick,
                                                      consumeClick: consumeClick,
                                                      forceFirstClickActivateFallback: forceFirstClickActivateFallback)
             if shouldSchedulePendingDockClickWatchdog(for: pendingClickContext!) {
@@ -524,6 +556,7 @@ final class DockExposeCoordinator: ObservableObject {
                                                               clickedBundle: recoveredBundle,
                                                               windowCountAtMouseDown: nil,
                                                               followsFirstClickActivation: isRecentFirstClickActivatePassThrough(for: recoveredBundle),
+                                                              followsDeferredModifierFirstClick: false,
                                                               consumeClick: false,
                                                               forceFirstClickActivateFallback: false)
                     let consumeRecovered = executeClickAction(recoveredContext)
@@ -557,6 +590,7 @@ final class DockExposeCoordinator: ObservableObject {
                                                        clickedBundle: resolvedBundleAtMouseUp,
                                                        windowCountAtMouseDown: context.windowCountAtMouseDown,
                                                        followsFirstClickActivation: context.followsFirstClickActivation,
+                                                       followsDeferredModifierFirstClick: context.followsDeferredModifierFirstClick,
                                                        consumeClick: context.consumeClick,
                                                        forceFirstClickActivateFallback: context.forceFirstClickActivateFallback)
             } else {
@@ -792,6 +826,7 @@ final class DockExposeCoordinator: ObservableObject {
                 Logger.debug("WORKFLOW: Clearing stale App Exposé tracking before deactivate/activate transition for \(clickedBundle)")
                 resetExposeTracking()
                 return executeFirstClickAction(for: clickedBundle,
+                                               at: location,
                                                flags: flags,
                                                frontmostBefore: frontmostBefore,
                                                windowCountHint: context.windowCountAtMouseDown,
@@ -814,7 +849,9 @@ final class DockExposeCoordinator: ObservableObject {
             return true
         }
 
-        if frontmostBefore != clickedBundle && !clickedAppIsActive {
+        if frontmostBefore != clickedBundle
+            && !clickedAppIsActive
+            && !context.followsDeferredModifierFirstClick {
             if lastTriggeredBundle != nil, appExposeActive {
                 Logger.debug("WORKFLOW: App Exposé active - user clicked different app (\(clickedBundle)) to show its windows")
 
@@ -845,6 +882,7 @@ final class DockExposeCoordinator: ObservableObject {
                 }
                 Logger.debug("WORKFLOW: Different app clicked; evaluating first-click behavior")
                 return executeFirstClickAction(for: clickedBundle,
+                                               at: location,
                                                flags: flags,
                                                frontmostBefore: frontmostBefore,
                                                windowCountHint: context.windowCountAtMouseDown,
@@ -875,6 +913,7 @@ final class DockExposeCoordinator: ObservableObject {
                                                            frontmostBefore: frontmostBefore) {
             Logger.debug("WORKFLOW: Promoting immediate post-dismiss click to first-click behavior for \(clickedBundle)")
             return executeFirstClickAction(for: clickedBundle,
+                                           at: location,
                                            flags: flags,
                                            frontmostBefore: frontmostBefore,
                                            windowCountHint: context.windowCountAtMouseDown,
@@ -1259,6 +1298,7 @@ final class DockExposeCoordinator: ObservableObject {
     }
 
     private func executeFirstClickAction(for bundleIdentifier: String,
+                                         at location: CGPoint,
                                          flags: CGEventFlags,
                                          frontmostBefore: String?,
                                          windowCountHint: Int? = nil,
@@ -1305,11 +1345,36 @@ final class DockExposeCoordinator: ObservableObject {
             return false
         }
 
+        if shouldDeferModifierFirstClickAction(action: action,
+                                               bundleIdentifier: bundleIdentifier,
+                                               flags: flags,
+                                               frontmostBefore: frontmostBefore) {
+            scheduleDeferredModifierFirstClickAction(action: action,
+                                                     bundleIdentifier: bundleIdentifier,
+                                                     flags: flags,
+                                                     frontmostBefore: frontmostBefore,
+                                                     location: location)
+            Logger.debug("WORKFLOW: Deferring first-click modifier action to preserve double-click bundle=\(bundleIdentifier) modifier=\(modifier.rawValue) action=\(action.rawValue)")
+            return true
+        }
+
+        return performFirstClickModifierAction(action: action,
+                                               bundleIdentifier: bundleIdentifier,
+                                               flags: flags,
+                                               frontmostBefore: frontmostBefore,
+                                               source: "firstClickModifier")
+    }
+
+    private func performFirstClickModifierAction(action: DockAction,
+                                                 bundleIdentifier: String,
+                                                 flags: CGEventFlags,
+                                                 frontmostBefore: String?,
+                                                 source: String) -> Bool {
         lastActionExecuted = action
         lastActionExecutedBundle = bundleIdentifier
-        lastActionExecutedSource = "firstClick"
+        lastActionExecutedSource = source
         lastActionExecutedAt = Date()
-        Logger.log("WORKFLOW: Executing first-click modifier action: \(action.rawValue) for \(bundleIdentifier) (modifier=\(modifier.rawValue), flags=\(flags.rawValue))")
+        Logger.log("WORKFLOW: Executing first-click modifier action: \(action.rawValue) for \(bundleIdentifier) (modifier=\(modifierCombination(from: flags).rawValue), flags=\(flags.rawValue), source=\(source))")
 
         switch action {
         case .none:
@@ -1351,11 +1416,90 @@ final class DockExposeCoordinator: ObservableObject {
         }
     }
 
+    private func clearDeferredModifierFirstClickContext() {
+        deferredModifierFirstClickContext = nil
+    }
+
+    private func shouldDeferModifierFirstClickAction(action: DockAction,
+                                                     bundleIdentifier: String,
+                                                     flags: CGEventFlags,
+                                                     frontmostBefore: String?) -> Bool {
+        guard frontmostBefore != bundleIdentifier else { return false }
+        guard modifierCombination(from: flags) != .none else { return false }
+        guard configuredAction(for: .click, flags: flags) != .none else { return false }
+        return DockDecisionEngine.shouldConsumeFirstClickModifierAction(
+            action: decisionAction(from: action),
+            isRunning: true,
+            canRunAppExpose: true
+        )
+    }
+
+    private func scheduleDeferredModifierFirstClickAction(action: DockAction,
+                                                          bundleIdentifier: String,
+                                                          flags: CGEventFlags,
+                                                          frontmostBefore: String?,
+                                                          location: CGPoint) {
+        deferredModifierFirstClickTokenCounter += 1
+        let token = deferredModifierFirstClickTokenCounter
+        let context = DeferredModifierFirstClickContext(token: token,
+                                                        location: location,
+                                                        flags: flags,
+                                                        frontmostBefore: frontmostBefore,
+                                                        clickedBundle: bundleIdentifier,
+                                                        action: action,
+                                                        queuedAt: Date())
+        deferredModifierFirstClickContext = context
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval) { [weak self] in
+            guard let self else { return }
+            guard let pending = self.deferredModifierFirstClickContext,
+                  pending.token == token else { return }
+            self.executeDeferredModifierFirstClick(pending, reason: "timeout")
+        }
+    }
+
+    private func shouldPromoteDeferredModifierFirstClick(_ context: DeferredModifierFirstClickContext,
+                                                         newBundle: String,
+                                                         flags: CGEventFlags) -> Bool {
+        guard context.clickedBundle == newBundle else { return false }
+        guard Date().timeIntervalSince(context.queuedAt) <= NSEvent.doubleClickInterval else { return false }
+        guard modifierCombination(from: context.flags) == modifierCombination(from: flags) else { return false }
+        guard configuredAction(for: .click, flags: flags) != .none else { return false }
+        return true
+    }
+
+    private func executeDeferredModifierFirstClick(_ context: DeferredModifierFirstClickContext,
+                                                   reason: String,
+                                                   shouldRecoverDockPressedStateAfterExecution: Bool = true) {
+        guard deferredModifierFirstClickContext?.token == context.token else { return }
+        clearDeferredModifierFirstClickContext()
+        Logger.debug("WORKFLOW: Executing deferred first-click modifier action reason=\(reason) bundle=\(context.clickedBundle) modifier=\(modifierCombination(from: context.flags).rawValue) action=\(context.action.rawValue)")
+
+        let consumeNow = performFirstClickModifierAction(action: context.action,
+                                                         bundleIdentifier: context.clickedBundle,
+                                                         flags: context.flags,
+                                                         frontmostBefore: context.frontmostBefore,
+                                                         source: "firstClickModifierDeferred")
+        let shouldRecoverDockPressedStateNow = shouldRecoverDockPressedStateAfterExecution
+            && consumeNow
+            && shouldRecoverDockPressedState(after: lastActionExecuted,
+                                             bundleIdentifier: context.clickedBundle)
+        if shouldRecoverDockPressedStateNow {
+            clickRecoveryTokenCounter += 1
+            let recoveryToken = clickRecoveryTokenCounter
+            scheduleDockPressedStateRecovery(at: context.location,
+                                             expectedBundle: context.clickedBundle,
+                                             clickToken: recoveryToken,
+                                             action: lastActionExecuted)
+        }
+    }
+
     private func handleEventTapTimeout() {
         clickRecoveryTokenCounter += 1
         activationAssertionTokenCounter += 1
         pendingClickContext = nil
         pendingClickWasDragged = false
+        clearDeferredModifierFirstClickContext()
         lastScrollBundle = nil
         lastScrollDirection = nil
         lastScrollTime = nil
@@ -1498,7 +1642,9 @@ final class DockExposeCoordinator: ObservableObject {
             $0.bundleIdentifier == clickedBundle && $0.isActive
         }
 
-        if frontmostBefore != clickedBundle && !clickedAppIsActive {
+        if frontmostBefore != clickedBundle
+            && !clickedAppIsActive
+            && !context.followsDeferredModifierFirstClick {
             if lastTriggeredBundle != nil, appExposeInvocationToken != nil {
                 return false
             }
@@ -1927,7 +2073,7 @@ final class DockExposeCoordinator: ObservableObject {
     private func performHideAppToggle(targetBundleIdentifier: String) -> Bool {
         // Hide App should toggle based on the target app's own visibility, not unrelated hidden apps.
         if WindowManager.isAppHidden(bundleIdentifier: targetBundleIdentifier) {
-            _ = WindowManager.showAllApplications()
+            _ = WindowManager.unhideApp(bundleIdentifier: targetBundleIdentifier)
             lastHideOthersTargetBundle = nil
         } else {
             _ = WindowManager.hideAllWindows(bundleIdentifier: targetBundleIdentifier)
