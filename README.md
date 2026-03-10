@@ -4,6 +4,8 @@
 
 Docktor is a lightweight macOS menu bar app that lets you run actions by clicking or scrolling on Dock icons (such as executing App Expose, Hiding, Revealing, Minimising etc.)
 
+The default setup is intentionally meant to feel a bit like "double click an app icon to open App Expose" for that app.
+
 Kind of [DockDoor](https://dockdoor.net/) 'Lite' using only macOS' built in features.
 
 ## Install
@@ -43,4 +45,3 @@ System Settings paths:
 ```bash
 xcodebuild -project Docktor.xcodeproj -scheme Docktor -configuration Debug build
 ```
-

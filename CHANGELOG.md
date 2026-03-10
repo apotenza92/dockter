@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file (stable and beta
 
 - Ongoing development.
 
+## [v0.1.0]
+
+- Fixed the default `activateApp -> active-app action` double-click path for `Hide App`, `Hide Others`, `Single App Mode`, `Minimize All`, and `Quit App`, including Mail-specific hide fallback handling and stale first-click recovery.
+- Clarified the README defaults so the intended baseline behavior is “double click an app icon to open App Expose” for that app.
+- Added broader Dock-click regression coverage, including the new active-click soak runner plus harness fixes for pinned fixtures, repeated `minimizeAll` setup, and stable fixture-pool pair selection.
+
 ## [v0.0.39]
 
 - Changed the shipped defaults so `Show menu bar icon` starts enabled, `Show settings on startup` stays off after the first run, and `Start Docktor Beta at login` remains off by default.

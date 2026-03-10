@@ -52,11 +52,25 @@ enum WindowManager {
 
         // Final fallback: activate target app then send Cmd+H.
         _ = app.activate(options: [.activateIgnoringOtherApps])
-        let frontmost = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        if frontmost == bundleIdentifier,
-           KeyChordSender.postSimple(keyCode: 4, flags: .maskCommand),
-           waitForHidden(app, timeout: 0.35) {
-            Logger.log("WindowManager: Cmd+H fallback succeeded for \(bundleIdentifier)")
+        let frontmost = waitForFrontmost(bundleIdentifier, timeout: 0.25)
+            ? bundleIdentifier
+            : NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        if frontmost == bundleIdentifier {
+            let cmdHFallbacks: [(label: String, send: () -> Bool)] = [
+                ("Cmd+H simple", { KeyChordSender.postSimple(keyCode: 4, flags: .maskCommand) }),
+                ("Cmd+H full", { KeyChordSender.post(keyCode: 4, flags: .maskCommand) })
+            ]
+            for fallback in cmdHFallbacks {
+                guard fallback.send() else { continue }
+                if waitForHidden(app, timeout: 0.35) {
+                    Logger.log("WindowManager: \(fallback.label) fallback succeeded for \(bundleIdentifier)")
+                    return true
+                }
+            }
+        }
+
+        if pressHideMenuItem(for: app), waitForHidden(app, timeout: 0.35) {
+            Logger.log("WindowManager: AX menu hide fallback succeeded for \(bundleIdentifier)")
             return true
         }
 
@@ -422,6 +436,68 @@ enum WindowManager {
         }
 
         return app.isHidden
+    }
+
+    private static func waitForFrontmost(_ bundleIdentifier: String,
+                                         timeout: TimeInterval,
+                                         pollInterval: TimeInterval = 0.05) -> Bool {
+        if NSWorkspace.shared.frontmostApplication?.bundleIdentifier == bundleIdentifier {
+            return true
+        }
+
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if NSWorkspace.shared.frontmostApplication?.bundleIdentifier == bundleIdentifier {
+                return true
+            }
+            _ = RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(pollInterval))
+        }
+
+        return NSWorkspace.shared.frontmostApplication?.bundleIdentifier == bundleIdentifier
+    }
+
+    private static func pressHideMenuItem(for app: NSRunningApplication) -> Bool {
+        guard let appName = app.localizedName else { return false }
+
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        guard let menuBarRef = copyAXAttributeValue(element: appElement, attribute: kAXMenuBarAttribute) else {
+            return false
+        }
+        let menuBar = unsafeBitCast(menuBarRef, to: AXUIElement.self)
+        guard let menuBarItems = copyAXAttributeValue(element: menuBar, attribute: kAXChildrenAttribute) as? [AXUIElement],
+              let appMenuItem = menuBarItems.first(where: { axTitle(of: $0) == appName }) else {
+            return false
+        }
+
+        guard AXUIElementPerformAction(appMenuItem, kAXPressAction as CFString) == .success else {
+            return false
+        }
+        _ = RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.15))
+
+        guard let appMenuChildren = copyAXAttributeValue(element: appMenuItem, attribute: kAXChildrenAttribute) as? [AXUIElement],
+              let menu = appMenuChildren.first,
+              let menuItems = copyAXAttributeValue(element: menu, attribute: kAXChildrenAttribute) as? [AXUIElement],
+              let hideItem = menuItems.first(where: { item in
+                  guard let title = axTitle(of: item) else { return false }
+                  return title.hasPrefix("Hide ") && title != "Hide Others"
+              }) else {
+            return false
+        }
+
+        return AXUIElementPerformAction(hideItem, kAXPressAction as CFString) == .success
+    }
+
+    private static func copyAXAttributeValue(element: AXUIElement,
+                                             attribute: String) -> CFTypeRef? {
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success else {
+            return nil
+        }
+        return value
+    }
+
+    private static func axTitle(of element: AXUIElement) -> String? {
+        copyAXAttributeValue(element: element, attribute: kAXTitleAttribute) as? String
     }
 
     private static func rawAppWindows(for app: NSRunningApplication) -> [AXUIElement] {

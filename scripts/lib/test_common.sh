@@ -615,13 +615,77 @@ dock_icon_center() {
     | awk -F',' '{gsub(/ /,""); printf "%d,%d", int($1+$3/2), int($2+$4/2)}'
 }
 
+dock_icon_frame() {
+  local icon_name="$1"
+  ensure_dock_ready || { echo "error: Dock process not ready" >&2; return 1; }
+  osascript -e "tell application \"System Events\" to tell process \"Dock\" to get {position, size} of UI element \"$icon_name\" of list 1" \
+    | awk -F',' '{gsub(/ /,""); printf "%d,%d,%d,%d", int($1), int($2), int($3), int($4)}'
+}
+
+dock_autohide_enabled() {
+  local autohide
+  autohide="$(defaults read com.apple.dock autohide 2>/dev/null || echo 0)"
+  [[ "$autohide" == "1" || "$autohide" == "true" ]]
+}
+
+dock_reveal_for_icon() {
+  local icon_name="$1"
+  require_cliclick_bin
+
+  local frame
+  frame="$(dock_icon_frame "$icon_name")" || return 1
+
+  local icon_x icon_y icon_w icon_h
+  IFS=',' read -r icon_x icon_y icon_w icon_h <<<"$frame"
+
+  local orientation
+  orientation="$(defaults read com.apple.dock orientation 2>/dev/null || echo bottom)"
+
+  local reveal_x reveal_y
+  case "$orientation" in
+    left)
+      reveal_x=$((icon_x + icon_w - 1))
+      reveal_y=$((icon_y + icon_h / 2))
+      ;;
+    right)
+      reveal_x=$((icon_x - 1))
+      reveal_y=$((icon_y + icon_h / 2))
+      ;;
+    *)
+      reveal_x=$((icon_x + icon_w / 2))
+      reveal_y=$((icon_y - 1))
+      ;;
+  esac
+
+  (( reveal_x < 0 )) && reveal_x=0
+  (( reveal_y < 0 )) && reveal_y=0
+
+  "$CLICLICK_BIN" "m:${reveal_x},${reveal_y}"
+  sleep 0.35
+}
+
+click_coordinate_with_hold() {
+  local coordinate="$1"
+  local hold_ms="${2:-60}"
+  require_cliclick_bin
+  "$CLICLICK_BIN" "dd:$coordinate" "w:$hold_ms" "du:$coordinate"
+}
+
+dock_click_target_coordinate() {
+  local icon_name="$1"
+  require_cliclick_bin
+  if dock_autohide_enabled; then
+    dock_reveal_for_icon "$icon_name" || return 1
+  fi
+  dock_icon_center "$icon_name"
+}
+
 dock_click_with_hold() {
   local icon_name="$1"
   local hold_ms="${2:-60}"
-  require_cliclick_bin
   local center
-  center="$(dock_icon_center "$icon_name")" || return 1
-  "$CLICLICK_BIN" "dd:$center" "w:$hold_ms" "du:$center"
+  center="$(dock_click_target_coordinate "$icon_name")" || return 1
+  click_coordinate_with_hold "$center" "$hold_ms"
 }
 
 dock_click() {
@@ -708,6 +772,9 @@ capture_dock_icon_snapshot() {
   local label="$2"
   local output
   output="$(artifact_path "$label" "png")" || return 1
+  if dock_autohide_enabled; then
+    dock_reveal_for_icon "$icon_name" || return 1
+  fi
   local center
   center="$(dock_icon_center "$icon_name")" || return 1
   local x="${center%,*}"
@@ -954,6 +1021,25 @@ tell application "System Events"
           set value of attribute "AXMinimized" of targetWindow to $minimized
         end try
       end if
+    end repeat
+  end tell
+end tell
+OSA
+}
+
+set_process_windows_minimized() {
+  local process_name="$1"
+  local minimized="$2"
+  osascript >/dev/null 2>&1 <<OSA
+tell application "System Events"
+  if not (exists process "$process_name") then
+    return
+  end if
+  tell process "$process_name"
+    repeat with targetWindow in windows
+      try
+        set value of attribute "AXMinimized" of targetWindow to $minimized
+      end try
     end repeat
   end tell
 end tell
