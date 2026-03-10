@@ -8,6 +8,7 @@ final class MenuBarController: NSObject {
     private weak var appDelegate: AppDelegate?
     private let menu = NSMenu()
     private var cancellables = Set<AnyCancellable>()
+    private let appDisplayName = AppServices.appDisplayName
 
     init(preferences: Preferences, appDelegate: AppDelegate) {
         #if DEBUG
@@ -28,12 +29,12 @@ final class MenuBarController: NSObject {
         guard let button = statusItem.button else { return }
         button.image = StatusBarIcon.image()
         button.imagePosition = .imageOnly
-        button.setAccessibilityLabel("Docktor")
+        button.setAccessibilityLabel(appDisplayName)
     }
 
     private func configureMenu() {
         let settingsItem = NSMenuItem(
-            title: "Settings…",
+            title: "\(appDisplayName) Settings…",
             action: #selector(openSettings),
             keyEquivalent: ","
         )
@@ -44,7 +45,7 @@ final class MenuBarController: NSObject {
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
-            title: "Quit Docktor",
+            title: "Quit \(appDisplayName)",
             action: #selector(quitApp),
             keyEquivalent: "q"
         )

@@ -5,6 +5,7 @@ struct PreferencesView: View {
     @ObservedObject var coordinator: DockExposeCoordinator
     @ObservedObject var updateManager: UpdateManager
     @ObservedObject var preferences: Preferences
+    private let appDisplayName = AppServices.appDisplayName
 
     private enum MappingSource {
         case click
@@ -150,7 +151,7 @@ struct PreferencesView: View {
                 .font(sectionTitleFont)
             checkboxRow("Show menu bar icon", isOn: $preferences.showMenuBarIcon)
             checkboxRow("Show settings on startup", isOn: $preferences.showOnStartup)
-            checkboxRow("Start Docktor at login", isOn: $preferences.startAtLogin)
+            checkboxRow("Start \(appDisplayName) at login", isOn: $preferences.startAtLogin)
             HStack(spacing: 12) {
                 Button("Restart", action: restartApp)
                     .buttonStyle(.bordered)
@@ -167,7 +168,7 @@ struct PreferencesView: View {
                         .foregroundStyle(.primary)
                 }
                 .buttonStyle(.bordered)
-                .help("Open Docktor on GitHub")
+                .help("Open \(appDisplayName) on GitHub")
             }
         }
     }
@@ -204,13 +205,13 @@ struct PreferencesView: View {
                 permissionActionButton(
                     title: "Accessibility",
                     granted: coordinator.accessibilityGranted,
-                    infoText: "Allows Docktor to identify Dock icons and trigger actions.",
+                    infoText: "Allows \(appDisplayName) to identify Dock icons and trigger actions.",
                     action: openAccessibilitySettings
                 )
                 permissionActionButton(
                     title: "Input Monitoring",
                     granted: coordinator.inputMonitoringGranted,
-                    infoText: "Allows Docktor to listen for global click and scroll gestures.",
+                    infoText: "Allows \(appDisplayName) to listen for global click and scroll gestures.",
                     action: openInputMonitoringSettings
                 )
             }

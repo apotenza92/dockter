@@ -12,6 +12,22 @@ final class AppServices {
     let coordinator: DockExposeCoordinator
     let updateManager: UpdateManager
 
+    static var appDisplayName: String {
+        if let displayName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String,
+           !displayName.isEmpty {
+            return displayName
+        }
+        if let bundleName = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String,
+           !bundleName.isEmpty {
+            return bundleName
+        }
+        return "Docktor"
+    }
+
+    static var settingsWindowTitle: String {
+        "\(appDisplayName) Settings"
+    }
+
     init(preferences: Preferences,
          coordinator: DockExposeCoordinator,
          updateManager: UpdateManager) {

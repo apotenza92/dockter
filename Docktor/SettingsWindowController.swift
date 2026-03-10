@@ -19,7 +19,7 @@ final class SettingsWindowController: NSWindowController {
         let window = NSWindow(contentViewController: hostingController)
 
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.title = "Docktor Settings"
+        window.title = AppServices.settingsWindowTitle
         window.isReleasedWhenClosed = false
         window.level = .normal
 
