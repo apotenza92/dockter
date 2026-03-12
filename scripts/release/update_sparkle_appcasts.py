@@ -245,13 +245,34 @@ def decode_signing_secret(signing_secret: str | None) -> tuple[str, bytes] | Non
         candidates.append(normalized[1:-1].strip())
 
     for candidate in candidates:
-        try:
-            decoded = base64.b64decode(candidate, validate=True)
-        except Exception:
+        variants = [candidate]
+        compacted = re.sub(r"\s+", "", candidate)
+        if compacted != candidate:
+            variants.append(compacted)
+        escaped_compacted = compacted.replace("\\n", "").replace("\\r", "")
+        if escaped_compacted != compacted:
+            variants.append(escaped_compacted)
+
+        decoded = None
+        successful_variant = None
+        for variant in variants:
+            try:
+                decoded = base64.b64decode(variant, validate=True)
+                successful_variant = variant
+                break
+            except Exception:
+                try:
+                    decoded = base64.b64decode(variant, validate=False)
+                    successful_variant = variant
+                    break
+                except Exception:
+                    continue
+
+        if decoded is None or successful_variant is None:
             continue
 
         if len(decoded) in {32, 96}:
-            return candidate, decoded
+            return successful_variant, decoded
 
         # Some secret stores end up double-encoding Sparkle's exported base64 key file.
         try:
