@@ -16,8 +16,8 @@
 - Fixed GitHub release appcast signing to use Sparkle's native `sign_update` tool, restoring compatibility with legacy exported Sparkle signing-key formats during automated releases.]]></description>
       <pubDate>Thu, 12 Mar 2026 12:14:22 +0000</pubDate>
       <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.3/Dockmint-v0.2.3-macos-arm64.zip"
-                 sparkle:edSignature="fKzc0qk5BjlzN5r/6tWukqatzRf9rljI52YdTVE6xb5ojzZP1h4dn10wsW12PYmHsbZc1HLvPng39+0O0cWzAQ=="
-                 length="4671352"
+                 sparkle:edSignature="/4WNpw5ZVtMimNSpH1Upj+0r6HtgSFMWlzGr1Uij3oHOJnutX3jyfUzrLVMbeu2Mp4ffgQZNU4exTALaEsg2Cw=="
+                 length="4670923"
                  type="application/octet-stream" />
     </item>
   </channel>
