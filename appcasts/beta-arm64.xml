@@ -5,19 +5,19 @@
     <description>Dockmint update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.2-beta.1</title>
-      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.2-beta.1</link>
-      <sparkle:version>200200001</sparkle:version>
-      <sparkle:shortVersionString>0.2.2-beta.1</sparkle:shortVersionString>
+      <title>Version 0.2.2-beta.2</title>
+      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.2-beta.2</link>
+      <sparkle:version>200200002</sparkle:version>
+      <sparkle:shortVersionString>0.2.2-beta.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/dockmint/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Restored Dockmint beta release continuity after the repository rename by publishing the beta channel from the live `apotenza92/dockmint` repo and aligning release metadata with Dockmint bundle/update paths.
-- Fixed updater continuity for Dockmint installs so beta appcasts and release downloads resolve under the Dockmint repo instead of dead pre-rename URLs.
-- Simplified the app icon and menu bar icon back to the plain Lucide leaf geometry to remove the flipped/skewed leaf rendering.]]></description>
-      <pubDate>Thu, 12 Mar 2026 05:55:28 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.2-beta.1/Dockmint-Beta-v0.2.2-beta.1-macos-arm64.zip"
-                 sparkle:edSignature="x6vxL1r0aE4LTNh9Lot1SidHJIEc19pJ60S+FcffHC1sPoYYCpPkSYQ1b6XuDKA/qbxDVfWT4h0yrpe72lMhBA=="
-                 length="2709566"
+      <description sparkle:format="plain-text"><![CDATA[- Reissued the Dockmint beta as the planned transition build so existing `Docktor Beta` installs can upgrade in place before the later bundle-identifier cleanup release.
+- Kept the Dockmint branding and beta release channel while restoring update compatibility for legacy `pzc.Dockter.beta` installs.
+- Corrected the GitHub release configuration to use the original Dockmint Sparkle signing key for future appcast publication.]]></description>
+      <pubDate>Thu, 12 Mar 2026 06:20:06 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.2-beta.2/Dockmint-Beta-v0.2.2-beta.2-macos-arm64.zip"
+                 sparkle:edSignature="U1imN1op6kUVYRe7fc4jIgLdok42sC2Rcp0XHA5kiUz1h1P5+naTYt0+g/6c0d8bPUQhJTJcobpiHJKq1ID1Ag=="
+                 length="2710460"
                  type="application/octet-stream" />
     </item>
   </channel>
