@@ -7,6 +7,12 @@ All notable changes to this project are documented in this file (stable and beta
 - Ongoing development.
 - Added a documented multi-release Docktor -> Dockmint rollout runbook plus release-time validation for migration phase, legacy appcast mirroring, and canonical `apotenza92/dockmint` release origin checks.
 
+## [v0.2.2]
+
+- Published the Dockmint stable transition release so existing `Docktor` installs can update in place to Dockmint branding before the later bundle-identifier cleanup release.
+- Kept stable and beta updater continuity on the legacy `Docktor` Sparkle feed while allowing beta users to converge back onto the newer stable release when no newer beta is available.
+- Updated the download page stable theme colors to match the current Dockmint app icon palette.
+
 ## [v0.2.2-beta.2]
 
 - Reissued the Dockmint beta as the planned transition build so existing `Docktor Beta` installs can upgrade in place before the later bundle-identifier cleanup release.
