@@ -7,6 +7,12 @@ All notable changes to this project are documented in this file (stable and beta
 - Ongoing development.
 - Added a documented multi-release Docktor -> Dockmint rollout runbook plus release-time validation for migration phase, legacy appcast mirroring, and canonical `apotenza92/dockmint` release origin checks.
 
+## [v0.2.2-beta.1]
+
+- Restored Dockmint beta release continuity after the repository rename by publishing the beta channel from the live `apotenza92/dockmint` repo and aligning release metadata with Dockmint bundle/update paths.
+- Fixed updater continuity for Dockmint installs so beta appcasts and release downloads resolve under the Dockmint repo instead of dead pre-rename URLs.
+- Simplified the app icon and menu bar icon back to the plain Lucide leaf geometry to remove the flipped/skewed leaf rendering.
+
 ## [v0.2.1]
 
 - Polished the single-window Settings layout with tighter top-column balancing, clearer section hierarchy, compact permissions rows, and action-table sizing tweaks that remove truncation in common controls.
