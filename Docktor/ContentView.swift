@@ -11,20 +11,12 @@ private enum SettingsLayout {
     static let sectionSpacing: CGFloat = 16
     static let rowSpacing: CGFloat = 10
     static let columnSpacing: CGFloat = 14
+    static let updatesLeadingInset: CGFloat = 10
     static let formRowSpacing: CGFloat = 8
-    static let generalPrimaryColumnWidth: CGFloat = 320
-    static let generalSecondaryColumnMinWidth: CGFloat = 280
-    static let generalFormLabelWidth: CGFloat = 110
-    static let generalControlTrailingWidth: CGFloat =
-        generalPrimaryColumnWidth +
-        columnSpacing +
-        generalFormLabelWidth +
-        formRowSpacing +
-        pickerWidth
     static let tableCornerRadius: CGFloat = 12
     static let tableCellSpacing: CGFloat = 12
-    static let actionModifierColumnWidth: CGFloat = 128
-    static let actionColumnWidth: CGFloat = 148
+    static let actionModifierColumnWidth: CGFloat = 144
+    static let actionColumnWidth: CGFloat = 144
     static let folderModifierColumnWidth: CGFloat = 128
     static let folderGestureColumnWidth: CGFloat = 96
     static let folderOpenWithColumnWidth: CGFloat = 134
@@ -46,14 +38,13 @@ private enum SettingsLayout {
         folderOptionsPreferredWidth +
         (tableCellSpacing * 2) +
         (tableCardPadding * 2)
-    static let generalTwoColumnWidth: CGFloat =
-        generalPrimaryColumnWidth +
-        generalSecondaryColumnMinWidth +
-        columnSpacing
-    static let generalContentWidth: CGFloat =
-        max(generalTwoColumnWidth, generalControlTrailingWidth)
     static let windowContentWidth: CGFloat =
-        max(generalContentWidth, appActionsCardWidth, folderActionsCardWidth)
+        max(appActionsCardWidth, folderActionsCardWidth)
+    static let generalColumnWidth: CGFloat = 236
+    static let updatesColumnWidth: CGFloat = 280
+    static let permissionsColumnWidth: CGFloat =
+        windowContentWidth - generalColumnWidth - updatesColumnWidth - (columnSpacing * 2)
+    static let generalContentWidth: CGFloat = windowContentWidth
 }
 
 enum SettingsPane: String, CaseIterable, Identifiable {
@@ -155,7 +146,7 @@ struct PreferencesView: View {
             case .option:
                 return "Option (⌥)"
             case .shiftOption:
-                return "Shift + Option (⇧⌥)"
+                return "Shift + Option (⇧ + ⌥)"
             }
         }
 
@@ -292,75 +283,7 @@ struct PreferencesView: View {
     private var generalPane: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: SettingsLayout.columnSpacing) {
-                    SettingsGroup(title: "General") {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Toggle("Show menu bar icon", isOn: $preferences.showMenuBarIcon)
-                            Toggle("Show settings on startup", isOn: $preferences.showOnStartup)
-                            Toggle("Start \(appDisplayName) at login", isOn: $preferences.startAtLogin)
-
-                            HStack(spacing: 8) {
-                                applicationButtons
-                            }
-                            .padding(.top, 4)
-                        }
-                    }
-                    .frame(width: SettingsLayout.generalPrimaryColumnWidth, alignment: .topLeading)
-
-                    SettingsGroup(title: "Updates") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Button("Check for Updates", action: updateManager.checkForUpdates)
-                                .buttonStyle(.bordered)
-                                .keyboardShortcut(.defaultAction)
-                                .disabled(!updateManager.canCheckForUpdates)
-
-                            HStack(alignment: .center, spacing: SettingsLayout.formRowSpacing) {
-                                Text("Check Frequency")
-                                    .foregroundStyle(.secondary)
-
-                                Picker("", selection: $preferences.updateCheckFrequency) {
-                                    ForEach(UpdateCheckFrequency.allCases) { frequency in
-                                        Text(frequency.displayName).tag(frequency)
-                                    }
-                                }
-                                .labelsHidden()
-                                .pickerStyle(.menu)
-                                .frame(width: SettingsLayout.pickerWidth, alignment: .leading)
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(updateManager.currentVersionText)
-                                Text(updateManager.updateStatusText)
-                            }
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                }
-
-                sectionDivider
-
-                SettingsGroup(title: "Permissions") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        permissionRow(
-                            title: "Accessibility",
-                            granted: coordinator.accessibilityGranted,
-                            infoText: "Allows \(appDisplayName) to identify Dock icons and trigger actions.",
-                            buttonTitle: "Open Accessibility Settings",
-                            action: openAccessibilitySettings
-                        )
-
-                        permissionRow(
-                            title: "Input Monitoring",
-                            granted: coordinator.inputMonitoringGranted,
-                            infoText: "Allows \(appDisplayName) to listen for global click and scroll gestures.",
-                            buttonTitle: "Open Input Monitoring Settings",
-                            action: openInputMonitoringSettings
-                        )
-                    }
-                }
+                generalOverviewSection
             }
             .frame(width: SettingsLayout.generalContentWidth, alignment: .leading)
             .padding(.bottom, SettingsLayout.generalBottomInset)
@@ -380,7 +303,7 @@ struct PreferencesView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     paneSectionHeader(
                         title: "App Actions",
-                        description: "First click controls what happens when the app is not active yet. Double click applies after the app is already active.",
+                        description: "First click controls what happens when the app is not active yet.\nDouble click applies after the app is already active.",
                         buttonTitle: "Reset App Actions",
                         action: preferences.resetAppActionsToDefaults
                     )
@@ -408,84 +331,119 @@ struct PreferencesView: View {
     }
 
     private var singlePageGeneralSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: SettingsLayout.columnSpacing) {
-                SettingsGroup(title: "General") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Toggle("Show menu bar icon", isOn: $preferences.showMenuBarIcon)
-                        Toggle("Show settings on startup", isOn: $preferences.showOnStartup)
-                        Toggle("Start \(appDisplayName) at login", isOn: $preferences.startAtLogin)
+        generalOverviewSection
+    }
 
-                        HStack(spacing: 8) {
-                            applicationButtons
-                        }
-                        .padding(.top, 4)
-                    }
+    private var generalOverviewSection: some View {
+        HStack(alignment: .top, spacing: SettingsLayout.columnSpacing) {
+            generalSettingsGroup
+                .frame(width: SettingsLayout.generalColumnWidth, alignment: .topLeading)
+
+            updatesSettingsGroup
+                .padding(.leading, SettingsLayout.updatesLeadingInset)
+                .frame(width: SettingsLayout.updatesColumnWidth, alignment: .topLeading)
+
+            permissionsSettingsGroup
+                .frame(width: SettingsLayout.permissionsColumnWidth, alignment: .topLeading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var generalSettingsGroup: some View {
+        SettingsGroup(title: "General") {
+            VStack(alignment: .leading, spacing: 10) {
+                Toggle("Show menu bar icon", isOn: $preferences.showMenuBarIcon)
+                Toggle("Show settings on startup", isOn: $preferences.showOnStartup)
+                Toggle("Start \(appDisplayName) at login", isOn: $preferences.startAtLogin)
+
+                HStack(spacing: 8) {
+                    applicationButtons
                 }
-                .frame(width: SettingsLayout.generalPrimaryColumnWidth, alignment: .topLeading)
+                .padding(.top, 4)
+            }
+        }
+    }
 
-                SettingsGroup(title: "Updates") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Button("Check for Updates", action: updateManager.checkForUpdates)
-                            .buttonStyle(.bordered)
-                            .keyboardShortcut(.defaultAction)
-                            .disabled(!updateManager.canCheckForUpdates)
+    private var updatesSettingsGroup: some View {
+        SettingsGroup(title: "Updates") {
+            VStack(alignment: .leading, spacing: 12) {
+                Button("Check for Updates", action: updateManager.checkForUpdates)
+                    .buttonStyle(.bordered)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(!updateManager.canCheckForUpdates)
 
-                        HStack(alignment: .center, spacing: SettingsLayout.formRowSpacing) {
-                            Text("Check Frequency")
-                                .foregroundStyle(.secondary)
+                HStack(alignment: .center, spacing: SettingsLayout.formRowSpacing) {
+                    Text("Check")
+                        .foregroundStyle(.secondary)
 
-                            Picker("", selection: $preferences.updateCheckFrequency) {
-                                ForEach(UpdateCheckFrequency.allCases) { frequency in
-                                    Text(frequency.displayName).tag(frequency)
-                                }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .frame(width: SettingsLayout.pickerWidth, alignment: .leading)
+                    Picker("", selection: $preferences.updateCheckFrequency) {
+                        ForEach(UpdateCheckFrequency.allCases) { frequency in
+                            Text(frequency.displayName).tag(frequency)
                         }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(width: SettingsLayout.pickerWidth, alignment: .leading)
+                }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(updateManager.currentVersionText)
-                            Text(updateManager.updateStatusText)
-                        }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(updateManager.currentVersionText)
+                    Text(updateManager.updateStatusText)
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var permissionsSettingsGroup: some View {
+        SettingsGroup(title: "Permissions") {
+            VStack(alignment: .leading, spacing: 12) {
+                permissionRow(
+                    title: "Accessibility",
+                    granted: coordinator.accessibilityGranted,
+                    infoText: "Allows \(appDisplayName) to identify Dock icons and trigger actions.",
+                    buttonTitle: "Open Settings",
+                    action: openAccessibilitySettings
+                )
+
+                permissionRow(
+                    title: "Input Monitoring",
+                    granted: coordinator.inputMonitoringGranted,
+                    infoText: "Allows \(appDisplayName) to listen for global click and scroll gestures.",
+                    buttonTitle: "Open Settings",
+                    action: openInputMonitoringSettings
+                )
+
+                if let note = permissionsStatusNote {
+                    Text(note)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .topLeading)
-            }
-
-            sectionDivider
-
-            SettingsGroup(title: "Permissions") {
-                VStack(alignment: .leading, spacing: 12) {
-                    permissionRow(
-                        title: "Accessibility",
-                        granted: coordinator.accessibilityGranted,
-                        infoText: "Allows \(appDisplayName) to identify Dock icons and trigger actions.",
-                        buttonTitle: "Open Accessibility Settings",
-                        action: openAccessibilitySettings
-                    )
-
-                    permissionRow(
-                        title: "Input Monitoring",
-                        granted: coordinator.inputMonitoringGranted,
-                        infoText: "Allows \(appDisplayName) to listen for global click and scroll gestures.",
-                        buttonTitle: "Open Input Monitoring Settings",
-                        action: openInputMonitoringSettings
-                    )
                 }
             }
         }
+    }
+
+    private var permissionsStatusNote: String? {
+        var missing: [String] = []
+        if !coordinator.accessibilityGranted {
+            missing.append("Accessibility")
+        }
+        if !coordinator.inputMonitoringGranted {
+            missing.append("Input Monitoring")
+        }
+
+        guard !missing.isEmpty else { return nil }
+        return "\(missing.joined(separator: " and ")) permission\(missing.count == 1 ? " is" : "s are") not enabled."
     }
 
     private var appActionsPane: some View {
         VStack(alignment: .leading, spacing: 0) {
             paneSectionHeader(
                 title: "App Actions",
-                description: "First click controls what happens when the app is not active yet. Double click applies after the app is already active.",
+                description: "First click controls what happens when the app is not active yet.\nDouble click applies after the app is already active.",
                 buttonTitle: "Reset App Actions",
                 action: preferences.resetAppActionsToDefaults
             )
@@ -883,24 +841,26 @@ struct PreferencesView: View {
         buttonTitle: String,
         action: @escaping () -> Void
     ) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundStyle(granted ? Color.green : Color.orange)
-                .padding(.top, 2)
+        HStack(alignment: .center, spacing: 10) {
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.circle")
+                    .foregroundStyle(granted ? Color.green : Color.orange)
 
-            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.body.weight(.medium))
-                Text(infoText)
+                    .lineLimit(1)
+
+                Image(systemName: "info.circle")
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .help(infoText)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer(minLength: 0)
 
             Button(buttonTitle, action: action)
                 .buttonStyle(.bordered)
         }
-        .frame(width: SettingsLayout.generalControlTrailingWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func appExposeRequiresMultipleBinding(source: MappingSource, modifier: MappingModifier) -> Binding<Bool> {
@@ -1235,7 +1195,7 @@ private struct SettingsGroup<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.headline)
+                .font(.title3.weight(.semibold))
 
             content
                 .frame(maxWidth: .infinity, alignment: .leading)

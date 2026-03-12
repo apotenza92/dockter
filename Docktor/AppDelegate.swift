@@ -18,6 +18,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let openSettingsDistributedNotification = Notification.Name("pzc.Docktor.openSettings")
     private var openSettingsObserver: NSObjectProtocol?
 
+    private static var shouldManageOtherDocktorInstances: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         migrateLegacyAppBundleNameIfNeeded()
@@ -71,6 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @discardableResult
     private func resolveRunningInstances(shouldRequestSettingsFromExisting: Bool) -> Bool {
+        guard Self.shouldManageOtherDocktorInstances || shouldRequestSettingsFromExisting else {
+            return false
+        }
+
         let me = ProcessInfo.processInfo.processIdentifier
         let others = NSWorkspace.shared.runningApplications
             .filter { $0.processIdentifier != me }
@@ -86,6 +98,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             requestSettingsOpenFromExistingInstance()
             NSApp.terminate(nil)
             return true
+        }
+
+        guard Self.shouldManageOtherDocktorInstances else {
+            Logger.log("Other Docktor-family instances detected but duplicate-instance management is disabled for this build: \(describeRunningApplications(others))")
+            return false
         }
 
         Logger.log("Terminating other Docktor instances: \(describeRunningApplications(others))")

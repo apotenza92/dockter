@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file (stable and beta
 
 - Ongoing development.
 
+## [v0.2.1]
+
+- Polished the single-window Settings layout with tighter top-column balancing, clearer section hierarchy, compact permissions rows, and action-table sizing tweaks that remove truncation in common controls.
+- Cleaned up update messaging in Settings by showing the short version only and mapping Sparkle "no update found" and cancelled checks to user-friendly status text.
+- Restricted duplicate-instance termination to Debug builds so release builds no longer interfere with Sparkle relaunch/update flows.
+
 ## [v0.2.0]
 
 - Redesigned Settings into a single compact scrollable window with inline section headers, right-aligned reset actions, richer update status text, and expanded Folder Actions controls.

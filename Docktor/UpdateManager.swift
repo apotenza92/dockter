@@ -144,18 +144,33 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
     private static func makeCurrentVersionText() -> String {
         let bundle = Bundle.main
         let shortVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-        let buildVersion = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
 
-        switch (shortVersion, buildVersion) {
-        case let (.some(shortVersion), .some(buildVersion)) where !shortVersion.isEmpty && !buildVersion.isEmpty:
-            return "Version \(shortVersion) (\(buildVersion))"
-        case let (.some(shortVersion), _ ) where !shortVersion.isEmpty:
+        switch shortVersion {
+        case let .some(shortVersion) where !shortVersion.isEmpty:
             return "Version \(shortVersion)"
-        case let (_, .some(buildVersion)) where !buildVersion.isEmpty:
-            return "Build \(buildVersion)"
         default:
             return "Version unavailable"
         }
+    }
+
+    private func updateStatusText(for error: Error) -> String {
+        let nsError = error as NSError
+
+        if nsError.domain == SUSparkleErrorDomain,
+           nsError.userInfo[SPUNoUpdateFoundReasonKey] != nil {
+            return "You're up to date."
+        }
+
+        if nsError.domain == NSCocoaErrorDomain,
+           nsError.code == NSUserCancelledError {
+            return "Update cancelled."
+        }
+
+        if nsError.localizedDescription.localizedCaseInsensitiveContains("up to date") {
+            return "You're up to date."
+        }
+
+        return "Update check failed: \(nsError.localizedDescription)"
     }
 
     func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
@@ -180,13 +195,13 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
 
     func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
         finishUpdateCheckIfNeeded()
-        updateStatusText = "Update check failed: \(error.localizedDescription)"
+        updateStatusText = updateStatusText(for: error)
     }
 
     func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck, error: Error?) {
         if let error {
             finishUpdateCheckIfNeeded()
-            updateStatusText = "Update check failed: \(error.localizedDescription)"
+            updateStatusText = updateStatusText(for: error)
             return
         }
 
