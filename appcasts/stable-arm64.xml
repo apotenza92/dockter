@@ -5,19 +5,19 @@
     <description>Dockmint update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.2</title>
-      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.2</link>
-      <sparkle:version>200290000</sparkle:version>
-      <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
+      <title>Version 0.2.3</title>
+      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.3</link>
+      <sparkle:version>200390000</sparkle:version>
+      <sparkle:shortVersionString>0.2.3</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/dockmint/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Published the Dockmint stable transition release so existing `Docktor` installs can update in place to Dockmint branding before the later bundle-identifier cleanup release.
-- Kept stable and beta updater continuity on the legacy `Docktor` Sparkle feed while allowing beta users to converge back onto the newer stable release when no newer beta is available.
-- Updated the download page stable theme colors to match the current Dockmint app icon palette.]]></description>
-      <pubDate>Thu, 12 Mar 2026 06:57:35 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.2/Dockmint-v0.2.2-macos-arm64.zip"
-                 sparkle:edSignature="60CYC5s/ghKKCJtV0cOLX3XF0qtGRSZ29Df1mxrYpS+mxOvknZGCk6OM/lWgu3blUnjEix89yE2qWBJ104TQBQ=="
-                 length="4672931"
+      <description sparkle:format="plain-text"><![CDATA[- Cut over the shipped stable and beta app identities to the final Dockmint bundle identifiers, `pzc.Dockmint` and `pzc.Dockmint.beta`, while keeping one overlap release of legacy Docktor feed mirroring and Homebrew aliases for existing installs.
+- Switched cleanup-phase packaged update feeds to the canonical `apotenza92/dockmint` appcasts so post-migration Dockmint builds no longer point at the legacy Docktor repository.
+- Fixed GitHub release appcast signing to use Sparkle's native `sign_update` tool, restoring compatibility with legacy exported Sparkle signing-key formats during automated releases.]]></description>
+      <pubDate>Thu, 12 Mar 2026 12:14:22 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.3/Dockmint-v0.2.3-macos-arm64.zip"
+                 sparkle:edSignature="fKzc0qk5BjlzN5r/6tWukqatzRf9rljI52YdTVE6xb5ojzZP1h4dn10wsW12PYmHsbZc1HLvPng39+0O0cWzAQ=="
+                 length="4671352"
                  type="application/octet-stream" />
     </item>
   </channel>
