@@ -135,6 +135,14 @@ enum DockDecisionEngine {
         }
     }
 
+    static func shouldConsumeFolderMouseDown(isConfigured: Bool,
+                                             opensInDock: Bool) -> Bool {
+        guard isConfigured else { return false }
+        // Non-Dock folder actions should not leak the initial press into the Dock, otherwise
+        // the Dock can still open the stack/popover while Dockmint also opens Finder.
+        return !opensInDock
+    }
+
     static func shouldConsumeFolderMouseUp(isConfigured: Bool,
                                            opensInDock: Bool) -> Bool {
         guard isConfigured else { return false }

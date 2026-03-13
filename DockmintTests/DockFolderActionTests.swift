@@ -2,21 +2,21 @@ import XCTest
 
 @MainActor
 final class DockFolderActionTests: XCTestCase {
-    func testFreshPreferencesDefaultFolderClickUsesFinderPassthrough() {
+    func testFreshPreferencesDefaultFolderClickUsesDock() {
         let preferences = makePreferences()
 
         XCTAssertEqual(preferences.folderClickAction, Preferences.defaultFolderClickAction)
-        XCTAssertTrue(preferences.folderClickAction.isFinderPassthrough)
+        XCTAssertFalse(preferences.folderClickAction.isFinderPassthrough)
         XCTAssertEqual(
             preferences.folderClickAction.openInApplicationIdentifier,
-            DockFolderOpenApplicationCatalog.finderBundleIdentifier
+            DockFolderOpenApplicationCatalog.dockIdentifier
         )
     }
 
-    func testResetFolderActionsRestoresFinderPassthroughDefault() {
+    func testResetFolderActionsRestoresDockDefault() {
         let preferences = makePreferences()
         preferences.folderClickAction = DockFolderAction(
-            openInApplicationIdentifier: DockFolderOpenApplicationCatalog.dockIdentifier,
+            openInApplicationIdentifier: DockFolderOpenApplicationCatalog.finderBundleIdentifier,
             view: .list,
             sortBy: .name,
             groupBy: .none
@@ -25,10 +25,10 @@ final class DockFolderActionTests: XCTestCase {
         preferences.resetFolderActionsToDefaults()
 
         XCTAssertEqual(preferences.folderClickAction, Preferences.defaultFolderClickAction)
-        XCTAssertTrue(preferences.folderClickAction.isFinderPassthrough)
+        XCTAssertFalse(preferences.folderClickAction.isFinderPassthrough)
     }
 
-    func testLegacyStoredDockDefaultMigratesToFinderPassthrough() {
+    func testLegacyStoredDockDefaultRemainsDock() {
         let defaults = isolatedDefaults()
         let legacyDefault = DockFolderAction(
             openInApplicationIdentifier: DockFolderOpenApplicationCatalog.dockIdentifier,
@@ -102,7 +102,7 @@ final class DockFolderActionTests: XCTestCase {
         )
         XCTAssertEqual(
             DockFolderActionExecutor.executionRoute(for: Preferences.defaultFolderClickAction),
-            .finderPassthrough
+            .dock
         )
         XCTAssertEqual(
             DockFolderActionExecutor.executionRoute(

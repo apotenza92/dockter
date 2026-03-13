@@ -6,6 +6,13 @@ All notable changes to this project are documented in this file (stable and beta
 
 - Ongoing development.
 
+## [v0.2.5]
+
+- Fixed the folder-click regression where Dockmint could move the mouse cursor or feel stuck while handling Dock folder clicks.
+- Reverted the default no-modifier folder click action back to `Dock` so plain clicks once again follow native Dock folder behavior by default.
+- Simplified Finder opening for non-default folder actions by removing the problematic existing-window probe from the click path.
+- Renamed the automatic Finder view label from `Finder Default (Preserve State)` to `System` in Folder Actions.
+
 ## [v0.2.4]
 
 - Changed the default plain Dock folder-stack click action to Finder passthrough (`Open With = Finder`, `View = Finder Default`) so fresh installs and Reset Folder Actions preserve Finder’s own remembered window, view, group, and sort state.

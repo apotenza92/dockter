@@ -196,6 +196,29 @@ final class DockDecisionEngineXCTest: XCTestCase {
         )
     }
 
+    func testFolderMouseDownConsumptionSemantics() {
+        XCTAssertFalse(
+            DockDecisionEngine.shouldConsumeFolderMouseDown(
+                isConfigured: false,
+                opensInDock: false
+            )
+        )
+
+        XCTAssertFalse(
+            DockDecisionEngine.shouldConsumeFolderMouseDown(
+                isConfigured: true,
+                opensInDock: true
+            )
+        )
+
+        XCTAssertTrue(
+            DockDecisionEngine.shouldConsumeFolderMouseDown(
+                isConfigured: true,
+                opensInDock: false
+            )
+        )
+    }
+
     func testFolderMouseUpConsumptionSemantics() {
         XCTAssertFalse(
             DockDecisionEngine.shouldConsumeFolderMouseUp(

@@ -37,7 +37,7 @@ enum DockFolderActionExecutor {
         case .dock:
             return openWithDock(action, folderURL: folderURL)
         case .finderPassthrough:
-            return openInFinderPreservingExistingWindowAsync(folderURL)
+            return openInFinderPassthrough(folderURL)
         case .customApplication:
             return open(folderURL, withApplicationIdentifier: action.openInApplicationIdentifier)
         case .finderScripted:
@@ -145,42 +145,10 @@ enum DockFolderActionExecutor {
     }
 
 
-    private static func openInFinderPreservingExistingWindowAsync(_ folderURL: URL) -> Bool {
+    private static func openInFinderPassthrough(_ folderURL: URL) -> Bool {
         let standardizedFolderURL = folderURL.standardizedFileURL
-        DispatchQueue.global(qos: .userInitiated).async {
-            if focusExistingFinderWindow(for: standardizedFolderURL) {
-                Logger.debug("DockFolderActionExecutor: Reused existing Finder window for \(standardizedFolderURL.path)")
-            } else {
-                DispatchQueue.main.async {
-                    _ = open(standardizedFolderURL, withApplicationIdentifier: DockFolderOpenApplicationCatalog.finderBundleIdentifier)
-                }
-            }
-        }
-        return true
-    }
-
-    private static func focusExistingFinderWindow(for folderURL: URL) -> Bool {
-        let lines = [
-            "tell application \"Finder\"",
-            "activate",
-            "set targetFolder to POSIX file \(appleScriptStringLiteral(folderURL.path)) as alias",
-            "repeat with targetWindow in Finder windows",
-            "try",
-            "if (target of targetWindow as alias) is targetFolder then",
-            "set index of targetWindow to 1",
-            "return \"found\"",
-            "end if",
-            "end try",
-            "end repeat",
-            "return \"missing\"",
-            "end tell"
-        ]
-
-        guard let output = runAppleScriptSync(lines) else {
-            return false
-        }
-
-        return output == "found"
+        Logger.debug("DockFolderActionExecutor: Direct Finder passthrough for \(standardizedFolderURL.path)")
+        return open(standardizedFolderURL, withApplicationIdentifier: DockFolderOpenApplicationCatalog.finderBundleIdentifier)
     }
 
     @discardableResult
@@ -190,6 +158,7 @@ enum DockFolderActionExecutor {
             return false
         }
 
+        Logger.debug("DockFolderActionExecutor: Opening \(folderURL.path) with \(identifier)")
         let configuration = NSWorkspace.OpenConfiguration()
         NSWorkspace.shared.open([folderURL], withApplicationAt: applicationURL, configuration: configuration) { _, error in
             if let error {

@@ -104,12 +104,13 @@ final class DockExposeCoordinator: ObservableObject {
         let buttonNumber: Int
         let flags: CGEventFlags
         let folderURL: URL
+        let consumeMouseDown: Bool
         let consumeMouseUp: Bool
     }
 
     private func clearPendingFolderClickContext(reason: String) {
         if let context = pendingFolderClickContext {
-            Logger.debug("WORKFLOW: Clearing pending folder click reason=\(reason) path=\(context.folderURL.path) consumeMouseUp=\(context.consumeMouseUp)")
+            Logger.debug("WORKFLOW: Clearing pending folder click reason=\(reason) path=\(context.folderURL.path) consumeMouseDown=\(context.consumeMouseDown) consumeMouseUp=\(context.consumeMouseUp)")
         } else {
             Logger.debug("WORKFLOW: Clearing pending folder click reason=\(reason) (none)")
         }
@@ -481,6 +482,7 @@ final class DockExposeCoordinator: ObservableObject {
                 pendingClickContext = nil
                 pendingClickWasDragged = false
                 let action = configuredFolderAction(for: .click, flags: flags)
+                let consumeMouseDown = shouldConsumeFolderMouseDown(for: action)
                 let consumeMouseUp = shouldConsumeFolderMouseUp(for: action)
                 folderClickSequenceCounter += 1
                 pendingFolderClickContext = PendingFolderClickContext(clickSequence: folderClickSequenceCounter,
@@ -488,6 +490,7 @@ final class DockExposeCoordinator: ObservableObject {
                                                                      buttonNumber: buttonNumber,
                                                                      flags: flags,
                                                                      folderURL: folderURL,
+                                                                     consumeMouseDown: consumeMouseDown,
                                                                      consumeMouseUp: consumeMouseUp)
                 pendingFolderClickWasDragged = false
                 if consumeMouseUp {
@@ -499,8 +502,11 @@ final class DockExposeCoordinator: ObservableObject {
                     lastDockBundleHit = "folder:\(folderURL.path)"
                     lastDockBundleHitAt = Date()
                 }
-                Logger.debug("WORKFLOW: Created pending folder click path=\(folderURL.path) action=\(action.debugName) modifier=\(modifierCombination(from: flags).rawValue) consumeMouseUp=\(consumeMouseUp)")
-                return false
+                Logger.debug("WORKFLOW: Created pending folder click path=\(folderURL.path) action=\(action.debugName) modifier=\(modifierCombination(from: flags).rawValue) consumeMouseDown=\(consumeMouseDown) consumeMouseUp=\(consumeMouseUp)")
+                if consumeMouseDown {
+                    Logger.debug("WORKFLOW: Consuming folder mouse-down path=\(folderURL.path) action=\(action.debugName)")
+                }
+                return consumeMouseDown
             }
 
             let nowUptime = ProcessInfo.processInfo.systemUptime
@@ -633,12 +639,13 @@ final class DockExposeCoordinator: ObservableObject {
                 }
 
                 let resolvedFolderAtMouseUp = folderURLNearPoint(location) ?? context.folderURL
-                Logger.debug("WORKFLOW: Folder mouse-up resolution initial=\(context.folderURL.path) resolved=\(resolvedFolderAtMouseUp.path) consumeMouseUp=\(context.consumeMouseUp)")
+                Logger.debug("WORKFLOW: Folder mouse-up resolution initial=\(context.folderURL.path) resolved=\(resolvedFolderAtMouseUp.path) consumeMouseDown=\(context.consumeMouseDown) consumeMouseUp=\(context.consumeMouseUp)")
                 let effectiveContext = PendingFolderClickContext(clickSequence: context.clickSequence,
                                                                  location: context.location,
                                                                  buttonNumber: context.buttonNumber,
                                                                  flags: context.flags,
                                                                  folderURL: resolvedFolderAtMouseUp,
+                                                                 consumeMouseDown: context.consumeMouseDown,
                                                                  consumeMouseUp: context.consumeMouseUp)
                 clearPendingFolderClickContext(reason: "folderMouseUpHandled")
                 return executeFolderClickAction(effectiveContext)
@@ -1378,6 +1385,11 @@ final class DockExposeCoordinator: ObservableObject {
                 return preferences.shiftOptionFolderScrollDownAction
             }
         }
+    }
+
+    private func shouldConsumeFolderMouseDown(for action: DockFolderAction) -> Bool {
+        DockDecisionEngine.shouldConsumeFolderMouseDown(isConfigured: action.isConfigured,
+                                                        opensInDock: action.opensInDock)
     }
 
     private func shouldConsumeFolderMouseUp(for action: DockFolderAction) -> Bool {

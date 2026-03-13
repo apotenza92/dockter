@@ -204,7 +204,7 @@ enum DockFolderView: String, CaseIterable, Codable {
 
     var displayName: String {
         switch self {
-        case .automatic: return "Finder Default (Preserve State)"
+        case .automatic: return "System"
         case .icon: return "Icon"
         case .list: return "List"
         case .column: return "Column"
@@ -633,7 +633,7 @@ final class Preferences: ObservableObject {
     private let folderClickDefaultMigratedKey = "folderClickDefaultMigrated_v8"
 
     static let defaultFolderClickAction = DockFolderAction(
-        openInApplicationIdentifier: DockFolderOpenApplicationCatalog.finderBundleIdentifier,
+        openInApplicationIdentifier: DockFolderOpenApplicationCatalog.dockIdentifier,
         view: .automatic,
         sortBy: .none,
         groupBy: .none
