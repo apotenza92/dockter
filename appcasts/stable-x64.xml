@@ -5,20 +5,19 @@
     <description>Dockmint update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.5</title>
-      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.5</link>
-      <sparkle:version>200590000</sparkle:version>
-      <sparkle:shortVersionString>0.2.5</sparkle:shortVersionString>
+      <title>Version 0.2.6</title>
+      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.6</link>
+      <sparkle:version>200690000</sparkle:version>
+      <sparkle:shortVersionString>0.2.6</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/dockmint/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed the folder-click regression where Dockmint could move the mouse cursor or feel stuck while handling Dock folder clicks.
-- Reverted the default no-modifier folder click action back to `Dock` so plain clicks once again follow native Dock folder behavior by default.
-- Simplified Finder opening for non-default folder actions by removing the problematic existing-window probe from the click path.
-- Renamed the automatic Finder view label from `Finder Default (Preserve State)` to `System` in Folder Actions.]]></description>
-      <pubDate>Fri, 13 Mar 2026 07:29:06 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.5/Dockmint-v0.2.5-macos-x64.zip"
-                 sparkle:edSignature="5AQEJ6ghKI0Ssk+TQDWxjmTiC5eTbJ3vUlSdL7nse9GvpQacN/TwDiaOGG2i+cjFI2xjiLhhOCHuPMMFTyD6Ag=="
-                 length="4698235"
+      <description sparkle:format="plain-text"><![CDATA[- Made Dock icon double-click actions run only on a real macOS double click, so single clicks on an already-frontmost app no longer trigger the mapped double-click action.
+- Updated the shipped defaults so first click uses `App Exposé (>1 window only)` while double click opens `App Exposé`, removed the default no-modifier app and folder scroll actions, made Option-click on folders open Finder with `System` view, and refreshed the README, website, and Settings copy to match.
+- Shortened the Settings window default size, kept vertical resizing enabled with fixed width, made local Debug builds open Settings automatically on launch, and targeted the built app directly in local settings URL checks so installed Dockmint-family apps are not pulled into dev workflows.]]></description>
+      <pubDate>Fri, 13 Mar 2026 09:49:02 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.6/Dockmint-v0.2.6-macos-x64.zip"
+                 sparkle:edSignature="z4KiWRAX53F8GpbCseOXKu/yNZNukc1+rGpKBt0mYXkhcJM6S1FhP2pN/MESrqkUq/Uib4y9nHM9V9X89coHBw=="
+                 length="4699679"
                  type="application/octet-stream" />
     </item>
   </channel>
