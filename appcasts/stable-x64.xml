@@ -5,19 +5,19 @@
     <description>Dockmint update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.6</title>
-      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.6</link>
-      <sparkle:version>200690000</sparkle:version>
-      <sparkle:shortVersionString>0.2.6</sparkle:shortVersionString>
+      <title>Version 0.2.8</title>
+      <link>https://github.com/apotenza92/dockmint/releases/tag/v0.2.8</link>
+      <sparkle:version>200890000</sparkle:version>
+      <sparkle:shortVersionString>0.2.8</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/dockmint/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Made Dock icon double-click actions run only on a real macOS double click, so single clicks on an already-frontmost app no longer trigger the mapped double-click action.
-- Updated the shipped defaults so first click uses `App Exposé (>1 window only)` while double click opens `App Exposé`, removed the default no-modifier app and folder scroll actions, made Option-click on folders open Finder with `System` view, and refreshed the README, website, and Settings copy to match.
-- Shortened the Settings window default size, kept vertical resizing enabled with fixed width, made local Debug builds open Settings automatically on launch, and targeted the built app directly in local settings URL checks so installed Dockmint-family apps are not pulled into dev workflows.]]></description>
-      <pubDate>Fri, 13 Mar 2026 09:49:02 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.6/Dockmint-v0.2.6-macos-x64.zip"
-                 sparkle:edSignature="z4KiWRAX53F8GpbCseOXKu/yNZNukc1+rGpKBt0mYXkhcJM6S1FhP2pN/MESrqkUq/Uib4y9nHM9V9X89coHBw=="
-                 length="4699679"
+      <description sparkle:format="plain-text"><![CDATA[- Reissued the onboarding and single-click App Exposé update after fixing Swift 6 actor-isolation build failures that blocked CI and signed release packaging for the `v0.2.7` tag.
+- Refreshed the GUI automation fixtures to rely on built-in macOS apps only, using Finder for 1-window Dock checks and TextEdit/Safari for multi-window coverage while forcing real separate windows even when the host prefers tabs.
+- Revalidated the shipped defaults and focused App Exposé flows with the refreshed built-in GUI suites, including default-install checks, active-app App Exposé stress, and the Dock context-menu guard.]]></description>
+      <pubDate>Sun, 15 Mar 2026 13:47:02 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/dockmint/releases/download/v0.2.8/Dockmint-v0.2.8-macos-x64.zip"
+                 sparkle:edSignature="VMzo9J6JrT9zhWgo0tXSqaS9sXjK2LHoWRqVRS1WvDOeYOsP98wpZshVAVSmzk6DuBXW2Pv+uYgOH9B/ilaZDw=="
+                 length="4770953"
                  type="application/octet-stream" />
     </item>
   </channel>
